@@ -3,20 +3,10 @@ package com.workday.java;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Queue;
-import java.util.concurrent.*;
-
 public class NaiveJobRunner implements JobRunner {
 
 
-//    int noOfThreads = Runtime.getRuntime().availableProcessors();
-//    ExecutorService executorService = Executors.newFixedThreadPool(noOfThreads);
-
     Logger logger = LoggerFactory.getLogger(this.getClass());
-
 
     private volatile boolean shutdownFinished = false;
 
@@ -37,7 +27,7 @@ public class NaiveJobRunner implements JobRunner {
             for(int i=0;i<Runtime.getRuntime().availableProcessors();i++){
                 NaiveJob poppedNaiveJob = (NaiveJob) jobQueue.pop();
                 if(poppedNaiveJob != null){
-                    QueueSingleton.submitJob(poppedNaiveJob);
+                    QueueManager.submitJob(poppedNaiveJob);
                 }
             }
 //        }
@@ -50,8 +40,11 @@ public class NaiveJobRunner implements JobRunner {
     @Override
     public void shutdown() {
 //        shouldContinue = false;
-        QueueSingleton.initiateShutdown();
-        while (!shutdownFinished) {
+        System.out.println("1 QueueManager.queueEmpty() "+ QueueManager.queueEmpty()+" "+ QueueManager.getCustomerQueue().size());
+        QueueManager.initiateShutdown();
+        System.out.println("2 QueueManager.queueEmpty() "+ QueueManager.queueEmpty()+" "+ QueueManager.getCustomerQueue().size());
+        while (!QueueManager.queueEmpty()) {
+            System.out.println("3 QueueManager.queueEmpty() "+ QueueManager.queueEmpty()+" "+ QueueManager.getCustomerQueue().size());
             try {
                 Thread.sleep(1);
             } catch (InterruptedException e) {

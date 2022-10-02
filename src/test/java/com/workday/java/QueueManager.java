@@ -5,11 +5,11 @@ import java.util.concurrent.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public class QueueSingleton {
+public class QueueManager {
 
-    private static final QueueSingleton instance;
-    static ConcurrentLinkedDeque<Long> customerQueue;
-    static Map<Long, ConcurrentLinkedDeque<Job>> customerJobsMap;
+    private static final QueueManager instance;
+    private static ConcurrentLinkedDeque<Long> customerQueue;
+    private static Map<Long, ConcurrentLinkedDeque<Job>> customerJobsMap;
 
     private static volatile boolean shouldContinue = true;
 
@@ -17,24 +17,17 @@ public class QueueSingleton {
 
     static
     {
-        instance = new QueueSingleton();
+        instance = new QueueManager();
         customerQueue = new ConcurrentLinkedDeque<Long>();//ArrayBlockingQueue LinkedBlockingQueue ConcurrentLinkedQueue
         customerJobsMap = new ConcurrentHashMap<>();
     }
 
-    private QueueSingleton() {
-    }
-
-
     public static synchronized void submitJob(Job job){
+        System.out.println("Job running "+job.uniqueId());
         CompletableFuture<Void> completableFuture = CompletableFuture.runAsync((NaiveJob)job,executorService);
     }
 
-    public static QueueSingleton getInstance(){
-        return instance;
-    }
-
-    public static boolean queueEmpty(){
+    public static synchronized boolean queueEmpty(){
        return customerQueue.isEmpty();
     }
 
@@ -73,5 +66,9 @@ public class QueueSingleton {
             }
         }
         return job;
+    }
+
+    public static ConcurrentLinkedDeque<Long> getCustomerQueue() {
+        return customerQueue;
     }
 }

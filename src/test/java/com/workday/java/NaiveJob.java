@@ -1,8 +1,6 @@
 package com.workday.java;
 
 import java.util.Random;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
 
 public class NaiveJob implements Job, Runnable {
 
@@ -70,10 +68,10 @@ public class NaiveJob implements Job, Runnable {
 
     private synchronized void runNextJob(){
         System.out.println("runNextJob "+this.customerId+" "+this.uniqueId);
-        NaiveJob nextJob = (NaiveJob) QueueSingleton.getNextJob();
+        NaiveJob nextJob = (NaiveJob) QueueManager.getNextJob();
         System.out.println("runNextJob nextJob "+nextJob.customerId+" "+nextJob.uniqueId);
         if(nextJob!= null) {
-            QueueSingleton.submitJob(nextJob);
+            QueueManager.submitJob(nextJob);
         }
     }
 
