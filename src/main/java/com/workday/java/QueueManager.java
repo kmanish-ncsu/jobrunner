@@ -16,7 +16,8 @@ public class QueueManager {
 
     private static volatile boolean shouldContinue = true;
 
-    static ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+//    static ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    static ExecutorService executorService = Executors.newFixedThreadPool(2);
 
     static
     {
