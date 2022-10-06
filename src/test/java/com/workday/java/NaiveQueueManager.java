@@ -5,9 +5,9 @@ import java.util.concurrent.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public class QueueManager {
+public class NaiveQueueManager {
 
-    private static final QueueManager instance;
+    private static final NaiveQueueManager instance;
     private static ConcurrentLinkedDeque<Long> customerQueue;
     private static Map<Long, ConcurrentLinkedDeque<Job>> customerJobsMap;
 
@@ -17,7 +17,7 @@ public class QueueManager {
 
     static
     {
-        instance = new QueueManager();
+        instance = new NaiveQueueManager();
         customerQueue = new ConcurrentLinkedDeque<Long>();//ArrayBlockingQueue LinkedBlockingQueue ConcurrentLinkedQueue
         customerJobsMap = new ConcurrentHashMap<>();
     }

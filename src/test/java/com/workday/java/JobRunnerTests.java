@@ -1,6 +1,5 @@
 package com.workday.java;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -16,23 +15,23 @@ import static org.junit.Assert.assertTrue;
  * Your implementation of JobRunner should pass this tests, feel free to copy
  * this class and adapt it to your solution.
  */
-public class NaiveJobRunnerTests {
+public class JobRunnerTests {
 
     @Test
     public void shouldEventuallyExecuteAllJobs() throws InterruptedException {
         List<Job> jobs = new ArrayList<>();
         for(int i = 0; i < 5; i++) {
-            jobs.add(new NaiveJob());
+            jobs.add(new JobImpl());
         }
         // There are 5 jobs of 100ms each = 500ms of cpu time
-        JobQueue testQueue = new NaiveJobQueue(jobs);
-        JobRunner jobRunner = new NaiveJobRunner();
+        JobQueue testQueue = new JobQueueImpl(jobs);
+        JobRunner jobRunner = new JobRunnerImpl();
         new Thread(() -> jobRunner.run(testQueue)).start();
         Thread.sleep(1000); // 1s is enough to execute all jobs even for the naive implementation
         assertEquals(testQueue.length(), 0);
         for (Job job : jobs) {
-            NaiveJob naiveJob = (NaiveJob) job;
-            assertTrue(naiveJob.isExecuted());
+            JobImpl jobImpl = (JobImpl) job;
+            assertTrue(jobImpl.isExecuted());
         }
     }
 
@@ -41,16 +40,16 @@ public class NaiveJobRunnerTests {
     public void shouldExecuteJobsWithPerformance() throws InterruptedException {
         List<Job> jobs = new ArrayList<>();
         for(int i = 0; i < 20; i++) {
-            jobs.add(new NaiveJob());
+            jobs.add(new JobImpl());
         }
         // There are 20 jobs of 100ms each = 2s of cpu time
-        JobQueue testQueue = new NaiveJobQueue(jobs);
-        JobRunner jobRunner = new NaiveJobRunner();
+        JobQueue testQueue = new JobQueueImpl(jobs);
+        JobRunner jobRunner = new JobRunnerImpl();
         new Thread(() -> jobRunner.run(testQueue)).start();
         Thread.sleep(1000); // Only 1s wait should be enough for all jobs to be executed
         for (Job job : jobs) {
-            NaiveJob naiveJob = (NaiveJob) job;
-            assertTrue(naiveJob.isExecuted());
+            JobImpl jobImpl = (JobImpl) job;
+            assertTrue(jobImpl.isExecuted());
         }
     }
 
@@ -64,36 +63,42 @@ public class NaiveJobRunnerTests {
         }
         List<Job> jobs = new ArrayList<>();
         for(Integer customerId: customerIds) {
-            for(int i = 1; i <= 1000; i++) {
-                jobs.add(new NaiveJob(customerId, 100));
+            for(int i = 1; i <= 100; i++) {
+                jobs.add(new JobImpl(customerId, 100));
             }
         }
         // There are 100000 jobs of 100ms each
-        JobQueue testQueue = new NaiveJobQueue(jobs);
-        JobRunner jobRunner = new NaiveJobRunner();
+        JobQueue testQueue = new JobQueueImpl(jobs);
+        JobRunner jobRunner = new JobRunnerImpl();
         new Thread(() -> jobRunner.run(testQueue)).start();
         Thread.sleep(10000); // This should be enough to execute about 10% of the jobs on a modern pc
         for(Integer customerId : customerIds) {
             int executedJobs = 0;
             for(Job job: jobs) {
-                if(((NaiveJob) job).isExecuted() && job.customerId() == customerId.intValue()) {
+                if(((JobImpl) job).isExecuted() && job.customerId() == customerId.intValue()) {
                     executedJobs++;
                 }
             }
             // For every customer there should be at least 1 executed job
             assertTrue(executedJobs > 0);
         }
-        System.out.println("end");
+        System.out.println("tests passed");
+        while (testQueue.length()>0){
+            Thread.sleep(1);
+            System.out.println("LEN !!!!!!!! "+testQueue.length());
+        }
     }
 
     @Test
     public void shouldShutdownGracefully() throws InterruptedException {
-        List<Job> jobs = Arrays.asList(new NaiveJob(), new NaiveJob(), new NaiveJob(), new NaiveJob());
-        JobQueue testQueue = new NaiveJobQueue(jobs);
-        JobRunner jobRunner = new NaiveJobRunner();
+        List<Job> jobs = Arrays.asList(new JobImpl(), new JobImpl(), new JobImpl(), new JobImpl());
+        JobQueue testQueue = new JobQueueImpl(jobs);
+        JobRunner jobRunner = new JobRunnerImpl();
         Thread runningThread = new Thread(() -> jobRunner.run(testQueue));
         runningThread.start();
+        System.out.println("5 QueueManager.queueEmpty() "+ QueueManager.queueEmpty()+" "+ QueueManager.getCustomerQueue().size());
         jobRunner.shutdown();
+        System.out.println("6 QueueManager.queueEmpty() "+ QueueManager.queueEmpty()+" "+ QueueManager.getCustomerQueue().size());
         assertTrue(testQueue.length() > 0);
     }
 
