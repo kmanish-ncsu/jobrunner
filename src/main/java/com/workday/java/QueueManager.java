@@ -10,9 +10,8 @@ import java.util.stream.Collectors;
 
 public class QueueManager {
 
-    private static final QueueManager instance;
-    private static ConcurrentLinkedDeque<Long> customerQueue;
-    private static Map<Long, ConcurrentLinkedDeque<Job>> customerJobsMap;
+    private static ConcurrentLinkedQueue<Long> customerQueue;
+    private static Map<Long, ConcurrentLinkedQueue<Job>> customerJobsMap;
 
     private static volatile boolean shouldContinue = true;
 
@@ -21,8 +20,7 @@ public class QueueManager {
 
     static
     {
-        instance = new QueueManager();
-        customerQueue = new ConcurrentLinkedDeque<Long>();//ArrayBlockingQueue LinkedBlockingQueue ConcurrentLinkedQueue
+        customerQueue = new ConcurrentLinkedQueue<Long>();//ArrayBlockingQueue LinkedBlockingQueue ConcurrentLinkedQueue
         customerJobsMap = new ConcurrentHashMap<>();
     }
 
@@ -37,11 +35,33 @@ public class QueueManager {
     }
 
     public static void init(List<Job> initialQueue) {
-        initCustomerQueue(initialQueue);
+        addCustomersToQueue(initialQueue);
         initCustomerJobs(initialQueue);
+        System.out.println("init done");
     }
 
-    static private void initCustomerQueue(List<Job> initialQueue) {
+    public static void addJobs(List<Job> jobs) {
+        shouldContinue = false;
+        addCustomersToQueue(jobs);
+        addJobsToMap(jobs);
+        shouldContinue = true;
+    }
+
+    private static void addJobsToMap(List<Job> jobs) {
+        Supplier<ConcurrentLinkedQueue<Job>> supplier = () -> new ConcurrentLinkedQueue<Job>();
+        Map<Long, ConcurrentLinkedQueue<Job>> collect = jobs.stream().collect(Collectors.groupingBy(Job::customerId, Collectors.toCollection(supplier)));
+        collect.forEach((customerId, jobs1) -> {
+            ConcurrentLinkedQueue<Job> customerJobQueue = customerJobsMap.get(customerId);
+            if(customerJobQueue != null){
+                customerJobQueue.addAll(jobs1);
+            }else{
+                customerJobsMap.put(customerId, jobs1);
+            }
+        });
+    }
+
+
+    static private void addCustomersToQueue(List<Job> initialQueue) {
         Set<Long> set = new HashSet<>();
         List<Job> jobs = initialQueue.stream().filter(job -> set.add(job.customerId())).collect(Collectors.toList());
         List<Long> uniqueCustomers = jobs.stream().map(job -> job.customerId()).collect(Collectors.toList());
@@ -49,7 +69,7 @@ public class QueueManager {
     }
 
     static private void initCustomerJobs(List<Job> initialQueue) {
-        Supplier<ConcurrentLinkedDeque<Job>> supplier = () -> new ConcurrentLinkedDeque<Job>();
+        Supplier<ConcurrentLinkedQueue<Job>> supplier = () -> new ConcurrentLinkedQueue<Job>();
         customerJobsMap = initialQueue.stream().collect(Collectors.groupingBy(Job::customerId, Collectors.toCollection(supplier)));
     }
 
@@ -62,18 +82,24 @@ public class QueueManager {
         Job job = null;
         Long nextCustomer = customerQueue.poll();
         //fetch next job from customerJobs (delete JOB once fetched)
-        ConcurrentLinkedDeque<Job> jobs = customerJobsMap.get(nextCustomer);
+        ConcurrentLinkedQueue<Job> jobs = customerJobsMap.get(nextCustomer);
         if(jobs==null) System.out.println("jobs null for customer "+nextCustomer);
         if(jobs != null && shouldContinue){
+            System.out.println("before poll getNextJob jobqueue size "+jobs.size());
             job = jobs.poll();
+            System.out.println("after poll getNextJob jobqueue size "+jobs.size());
             if(!jobs.isEmpty()) {
                 customerQueue.add(nextCustomer);
+            }else {
+                customerJobsMap.remove(nextCustomer);
             }
         }
+        System.out.println("customerQueue size"+customerQueue.size());
+        System.out.println("customerJobsMap size"+customerJobsMap.size());
         return job;
     }
 
-    public static ConcurrentLinkedDeque<Long> getCustomerQueue() {
+    public static ConcurrentLinkedQueue<Long> getCustomerQueue() {
         return customerQueue;
     }
 }

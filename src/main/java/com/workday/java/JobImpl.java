@@ -46,7 +46,7 @@ public class JobImpl implements Job, Runnable {
 
     @Override
     public void execute() {
-        System.out.println("execute started "+this.customerId+" "+this.uniqueId);
+        System.out.println("execute started: customerId "+this.customerId+" uniqueId "+this.uniqueId);
         try {
             Thread.sleep(duration);
             executed = true;
@@ -63,8 +63,7 @@ public class JobImpl implements Job, Runnable {
         this.execute();
     }
 
-    private synchronized void runNextJob(){
-        System.out.println("runNextJob "+this.customerId+" "+this.uniqueId);
+    private void runNextJob(){
         JobImpl nextJob = (JobImpl) QueueManager.getNextJob();
         System.out.println("runNextJob nextJob "+nextJob.customerId+" "+nextJob.uniqueId);
         if(nextJob!= null) {

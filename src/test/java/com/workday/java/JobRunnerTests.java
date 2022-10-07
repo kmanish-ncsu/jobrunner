@@ -62,6 +62,40 @@ public class JobRunnerTests {
 
     @Test
     // Fails in the naive implementation
+    public void shouldExecuteJobsWithPerformanceTestAddMoreJobs() throws InterruptedException {
+        List<Job> jobs = new ArrayList<>();
+        for(int i = 0; i < 20; i++) {
+            jobs.add(new JobImpl());
+        }
+        // There are 20 jobs of 100ms each = 2s of cpu time
+        JobQueue testQueue = new JobQueueImpl(jobs);
+        JobRunner jobRunner = new JobRunnerImpl();
+        new Thread(() -> jobRunner.run(testQueue)).start();
+        System.out.println("testQueue.length() "+testQueue.length());
+        Thread.sleep(1100); // Only 1s wait should be enough for all jobs to be executed
+        for (Job job : jobs) {
+            JobImpl jobImpl = (JobImpl) job;
+            assertTrue(jobImpl.isExecuted());
+        }
+
+        System.out.println("testQueue.length() "+testQueue.length());
+        List<Job> jobs2 = new ArrayList<>();
+        for(int i = 0; i < 10; i++) {
+            jobs2.add(new JobImpl());
+        }
+        Thread.sleep(2000);
+        ((JobRunnerImpl)jobRunner).addJobs(jobs2);
+        System.out.println("testQueue.length() "+testQueue.length());
+        ((JobRunnerImpl)jobRunner).trigger();
+        Thread.sleep(1100);
+        for (Job job : jobs2) {
+            JobImpl jobImpl = (JobImpl) job;
+            assertTrue(jobImpl.isExecuted());
+        }
+    }
+
+    @Test
+    // Fails in the naive implementation
     public void shouldExecuteJobsWithFairness() throws InterruptedException {
         System.out.println("start");
         List<Integer> customerIds = new ArrayList<>();
@@ -97,7 +131,6 @@ public class JobRunnerTests {
     }
 
     @Test
-    @Ignore
     public void shouldShutdownGracefully() throws InterruptedException {
         List<Job> jobs = Arrays.asList(new JobImpl(), new JobImpl(), new JobImpl(), new JobImpl());
         JobQueue testQueue = new JobQueueImpl(jobs);

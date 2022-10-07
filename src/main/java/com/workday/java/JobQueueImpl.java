@@ -4,8 +4,8 @@ import java.util.List;
 
 public class JobQueueImpl implements JobQueue {
 
-    public JobQueueImpl(List<Job> initialQueue) {
-        QueueManager.init(initialQueue);
+    public JobQueueImpl(List<Job> jobs) {
+        QueueManager.init(jobs);
     }
 
     @Override
